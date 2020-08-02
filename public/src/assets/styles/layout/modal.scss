@@ -1,0 +1,88 @@
+@import 'assets/styles/variables/colors.scss';
+
+.overlay {
+  background-color: $blue7;
+
+  .customModal {
+    max-width: 500px;
+    width: 100%;
+    background-color: transparent;
+    box-shadow: none;
+    padding: 0;
+    color: $white;
+
+    .modal-dialog {
+      margin: 0 auto;
+      max-width: 100%;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    .close {
+      padding: 11px 11px;
+    }
+
+    @keyframes customEnterAnimation {
+      0% {
+        transform: translate(0, -150px);
+        background-color: $white;
+      }
+
+      100% {
+        transform: translate(0, 0);
+        background-color: $white;
+      }
+    }
+
+    @keyframes customLeaveAnimation {
+      0% {
+        transform: translate(0, 0);
+        background-color: $white;
+      }
+
+      70% {
+        opacity: 0;
+      }
+
+      100% {
+        transform: translate(0, -150px);
+        opacity: 0;
+        background-color: $light-blue;
+      }
+    }
+
+    .close {
+      padding: 0;
+      &:focus {
+        outline: none;
+      }
+
+      span {
+        color: $white;
+        font-size: 22px;
+      }
+    }
+  }
+
+  .custom-overlay {
+    background-color: $blue6;
+  }
+
+  .modal-content {
+    background-color: $blue5;
+
+    & > div {
+      padding: 15px;
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+      border-bottom: 1px solid $grey;
+      h4 {
+        margin: 0;
+      }
+    }
+  }
+}

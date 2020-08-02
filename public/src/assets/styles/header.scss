@@ -1,0 +1,11 @@
+@import './variables/colors.scss';
+
+.header {
+    background-color: $blue;
+    padding: 5px 0;
+    min-height: 46px;
+
+    button {
+        color: $white;
+    }
+}

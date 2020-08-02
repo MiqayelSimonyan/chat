@@ -1,0 +1,12 @@
+@import './variables/colors.scss';
+
+.not_found_wrap {
+    min-height: 90vh;
+    a {
+        margin-top: 50px;
+        color: $blue5;
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}

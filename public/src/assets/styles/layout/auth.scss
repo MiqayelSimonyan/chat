@@ -1,0 +1,17 @@
+@import 'assets/styles/variables/colors.scss';
+
+form {
+    width: 100%;
+
+    div:before {
+        border-bottom-color: $grey!important;
+    }
+
+    label {
+        color: $white!important;
+    }
+
+    input {
+        color: $grey!important;
+    }
+}
