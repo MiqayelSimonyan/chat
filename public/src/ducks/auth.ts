@@ -6,21 +6,25 @@ import { IAuthState, AuthActionTypes } from 'types/store/auth';
 import { SetMapTypeAllowedData } from 'types/global/reducer-state';
 
 import history from '../session-history';
-import api from 'api';
+import api from 'services/axios';
+import socket from 'services/socket';
 
 import {
     IS_AUTH_REQUEST,
     IS_AUTH_SUCCESS,
     SIGN_OUT_REQUEST,
-    SIGN_OUT_SUCCESS
+    SIGN_OUT_SUCCESS,
+    LOG_IN_REGISTER_REQUEST,
+    AUTH_ERROR_SUCCESS
 } from '../types/store/auth';
-import { IAddUserAction, ADD_USER_REQUEST, UserActionTypes, IUser } from 'types/store/user';
+import { IAddUserAction, IUser, GET_USER_SUCCESS } from 'types/store/user';
 import { ILoginRegister, IIsAuth } from 'types/auth';
-import { addUser } from './user';
+import { IIndexSignature } from 'types/global/index-signature';
 
 const initialState: IAuthState = {
     loading: false,
-    isAuth: false
+    isAuth: Map(),
+    errors: Map({})
 };
 
 export const moduleName = 'auth';
@@ -38,21 +42,28 @@ export default function reducer(
             return state
                 .set('loading', true);
 
+        case LOG_IN_REGISTER_REQUEST:
+            return state
+                .set('loading', true)
+
         case IS_AUTH_SUCCESS:
             return state
                 .set('loading', false)
-                .set('isAuth', fromJS(action.payload))
+                .set('isAuth', fromJS({ auth: action.payload }))
+                .set('errors', fromJS({}))
 
         case SIGN_OUT_REQUEST:
             return state
                 .set('loading', true)
 
         case SIGN_OUT_SUCCESS:
-            console.log('action.payload', action.payload);
+            return state
+                .set('isAuth', fromJS({ auth: false }))
 
+        case AUTH_ERROR_SUCCESS:
             return state
                 .set('loading', false)
-                .set('isAuth', action.payload ? fromJS(false) : state.get('isAuth'))
+                .set('errors', fromJS(action.payload))
 
         default:
             return state;
@@ -60,9 +71,9 @@ export default function reducer(
 };
 
 /* actions */
-export function loginRegister(payload: ILoginRegister): UserActionTypes {
+export function loginRegister(payload: ILoginRegister): AuthActionTypes {
     return {
-        type: ADD_USER_REQUEST,
+        type: LOG_IN_REGISTER_REQUEST,
         payload
     };
 };
@@ -79,6 +90,13 @@ export function signOut(): AuthActionTypes {
     };
 };
 
+export function setAuthError(payload: IIndexSignature<string>): AuthActionTypes {
+    return {
+        type: AUTH_ERROR_SUCCESS,
+        payload
+    }
+};
+
 /* saga */
 export const loginRegisterSaga = function* (action: Required<IAddUserAction>) {
     const { mode, user } = action.payload;
@@ -91,9 +109,12 @@ export const loginRegisterSaga = function* (action: Required<IAddUserAction>) {
             payload: true
         });
 
-        yield put(addUser(data?.data));
+        socket.emit('authentificate', data?.data?._id);
+
+        yield put({ type: GET_USER_SUCCESS, payload: data?.data });
+        history.push('/users');
     } catch (error) {
-        console.log(error);
+        yield put(setAuthError(error.response?.data));
     }
 };
 
@@ -105,29 +126,32 @@ export const isAuthSaga = function* () {
             type: IS_AUTH_SUCCESS,
             payload: data?.data?.isAuth,
         });
-    } catch (error) {
-        console.log(error);
+    } catch (err) {
+        console.log('err', err);
     }
 };
 
 export const signOutSaga = function* () {
     try {
-        const data: AxiosResponse<boolean> = yield call(api, 'signOut');
+        const data: AxiosResponse<{ _id: string, message: string }> = yield call(api, 'signOut');
 
         yield put({
             type: SIGN_OUT_SUCCESS,
             payload: data?.data,
         });
 
+        socket.emit('signout', data?.data?._id);
+        yield put({ type: GET_USER_SUCCESS, payload: null });
+
         history.push('/');
-    } catch (error) {
-        console.log(error);
+    } catch (err) {
+        console.log('err', err);
     }
 };
 
 export const saga = function* () {
     yield all([
-        takeEvery(ADD_USER_REQUEST, loginRegisterSaga),
+        takeEvery(LOG_IN_REGISTER_REQUEST, loginRegisterSaga),
         takeEvery(IS_AUTH_REQUEST, isAuthSaga),
         takeEvery(SIGN_OUT_REQUEST, signOutSaga)
     ]);

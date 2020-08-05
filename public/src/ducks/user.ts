@@ -1,14 +1,23 @@
-import { Map } from 'immutable';
+import { all, takeEvery, call, put } from 'redux-saga/effects';
+import { List, Map, fromJS } from 'immutable';
+import { AxiosResponse } from 'axios';
 
 import { SetMapTypeAllowedData } from 'types/global/reducer-state';
-import { IUserState, UserActionTypes, IUser } from 'types/store/user';
+import { IUserState, UserActionTypes, IUser, IGetUsersAction } from 'types/store/user';
+import api from 'services/axios';
 
 import {
-    ADD_USER_REQUEST,
-    ADD_USER_SUCCESS
+    GET_USER_REQUEST,
+    GET_USER_SUCCESS,
+    GET_USERS_REQUEST,
+    GET_USERS_SUCCESS
 } from '../types/store/user';
 
-const initialState: IUserState = {};
+const initialState: IUserState = {
+    loading: false,
+    users: List.of(),
+    user: Map()
+};
 
 export const moduleName = 'user';
 
@@ -18,17 +27,26 @@ const initialStateMap = <MapTypeAllowedData>Map(initialState);
 
 export default function reducer(
     state: MapTypeAllowedData = initialStateMap,
-    action: any
+    action: UserActionTypes
 ) {
     switch (action.type) {
-        case ADD_USER_REQUEST:
+        case GET_USER_REQUEST:
             return state
                 .set('loading', true);
 
-        case ADD_USER_SUCCESS:
+        case GET_USER_SUCCESS:
             return state
                 .set('loading', false)
-                .set('user', action.payload)
+                .set('user', fromJS(action.payload))
+
+        case GET_USERS_REQUEST:
+            return state
+                .set('loading', true)
+
+        case GET_USERS_SUCCESS:
+            return state
+                .set('loading', false)
+                .set('users', fromJS(action.payload) || state.get('users'))
 
         default:
             return state;
@@ -36,9 +54,48 @@ export default function reducer(
 };
 
 /* actions */
-export function addUser(payload: IUser): UserActionTypes {
+export function getUser(): UserActionTypes {
     return {
-        type: ADD_USER_SUCCESS,
-        payload
+        type: GET_USER_REQUEST
     };
+};
+
+export function getUsers(): UserActionTypes {
+    return {
+        type: GET_USERS_REQUEST
+    };
+};
+
+/* saga */
+export const getUsersSaga = function* (action: Required<IGetUsersAction>) {
+    try {
+        const data: AxiosResponse<Array<IUser>> = yield call(api, 'users');
+
+        yield put({
+            type: GET_USERS_SUCCESS,
+            payload: data?.data
+        });
+    } catch (err) {
+        console.log('err', err);
+    }
+};
+
+export const getUserSaga = function* () {
+    try {
+        const data: AxiosResponse<Array<IUser>> = yield call(api, 'user');
+
+        yield put({
+            type: GET_USER_SUCCESS,
+            payload: data?.data
+        });
+    } catch (err) {
+        console.log('err', err);
+    }
+};
+
+export const saga = function* () {
+    yield all([
+        takeEvery(GET_USER_REQUEST, getUserSaga),
+        takeEvery(GET_USERS_REQUEST, getUsersSaga)
+    ]);
 };

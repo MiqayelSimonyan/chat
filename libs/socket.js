@@ -7,58 +7,47 @@ const socketRedis = require('socket.io-redis');
 const sessionStore = require('./sessionStore');
 const logger = require('./logger');
 
+global.users = [];
+
 function socket(server) {
   const io = socketIO(server);
 
   io.adapter(socketRedis(config.get('redis.uri')));
 
-  io.use(async function(socket, next) {
-    const cookies = new Cookies(socket.request, {});
-    const sid = cookies.get('koa:sess');
-    const session = await sessionStore.get(sid);
+  io.on('connection', async function (socket) {
+    logger.info('socket connected', { requestId: socket.id });
+    // socket.broadcast.emit('system_message', `${socket.user.username} connected.`);
 
-    if (!session) {
-      return next(new Error("No session"));
-    }
-
-    if (!session.passport && !session.passport.user) {
-      return next(new Error("Anonymous session not allowed"));
-    }
-
-    socket.user = await User.findById(session.passport.user);
-
-    session.socketIds = session.socketIds
-        ? session.socketIds.concat(socket.id)
-        : [socket.id];
-
-    await sessionStore.set(sid, session, null, {rolling: true});
-
-    socket.on('disconnect', async function() {
-      try {
-        const session = await sessionStore.get(sid);
-        if (session) {
-          session.socketIds.splice(session.socketIds.indexOf(socket.id), 1);
-          await sessionStore.set(sid, session, null, {rolling: true});
-        }
-      } catch {}
+    socket.on('authentificate', async (id) => {
+      users[id] = socket.id;
     });
 
-    next();
-  });
-
-  io.on('connection', function (socket) {
-    logger.info('socket connected', {requestId: socket.id});
-    socket.broadcast.emit('system_message', `${socket.user.displayName} connected.`);
+    socket.on('signout', async (_id) => {
+      delete users[_id];
+    });
 
     socket.on('disconnect', () => {
-      socket.broadcast.emit('system_message', `${socket.user.displayName} disconnected.`);
+      //  socket.broadcast.emit('system_message', `${socket.user.username} disconnected.`);
     });
 
-    socket.on('message', msg => {
-      socket.broadcast.emit('user_message', {
-        user: socket.user.displayName,
-        text: msg,
+    socket.on('message', (data) => {
+      socket.broadcast.to(users[data.reciver._id]).emit('user_message', {
+        sender: false,
+        reciver: data.user,
+        text: data.text,
         date: Date.now()
+      });
+    });
+
+    socket.on('typing', (user, reciver) => {
+      socket.broadcast.to(users[reciver._id]).emit('user_typing', {
+        user
+      });
+    });
+
+    socket.on('stop_typing', user => {
+      socket.broadcast.to(users[user._id]).emit('user_stop_typing', {
+        username: user.username
       });
     });
   });

@@ -1,21 +1,27 @@
 import React, { useEffect, FunctionComponent, useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 
 import { Button, Grid, Box } from '@material-ui/core';
 import TextField from '@material-ui/core/TextField';
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core';
 
 import CustomModal from 'components/common/custom-modal';
 import validate from 'components/common/validate';
 import ErrorField from 'components/common/error-field';
+import AuthErrors from 'components/common/auth-errors';
 
-import { loginRegister } from 'ducks/auth';
+import { loginRegister, setAuthError } from 'ducks/auth';
+import { errorSelector } from 'selectors/auth';
 
 import 'assets/styles/layout/auth.scss';
 import { IIndexSignature } from 'types/global/index-signature';
 
-const styles = () => ({
+const useStyles = makeStyles({
+    error: {
+        color: '#da2c2c',
+        margin: '0 13px'
+    },
     button: {
         marginRight: '10px',
         backgroundColor: '#1f5598'
@@ -25,12 +31,13 @@ const styles = () => ({
 type Props = {
     title: string;
     mode: string;
-    classes: IIndexSignature<any>;
 };
 
-const Auth: FunctionComponent<Props> = ({ mode, title, classes }) => {
+const Auth: FunctionComponent<Props> = ({ mode, title }) => {
     const [open, setModalStatus] = useState<boolean>(false);
+    const authErrors: IIndexSignature<string> = useSelector(errorSelector);
     const dispatch = useDispatch();
+    const classes = useStyles();
 
     const formik = useFormik({
         initialValues: { username: '', password: '' },
@@ -54,7 +61,10 @@ const Auth: FunctionComponent<Props> = ({ mode, title, classes }) => {
     };
 
     useEffect(() => {
-        if (!open) resetFormHandler();
+        if (!open) {
+            if (Object.keys(authErrors).length) dispatch(setAuthError({}));
+            resetFormHandler();
+        }
     }, [open]);
 
     const onChange = useCallback((fieldName: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,6 +79,7 @@ const Auth: FunctionComponent<Props> = ({ mode, title, classes }) => {
                 <Box className="modal-header">
                     <h4>{mode === 'signIn' ? 'Sign In' : 'Sign Up'}</h4>
                 </Box>
+                <AuthErrors errors={authErrors} className={classes.error} />
                 <Grid container className="modal-body">
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
@@ -111,4 +122,4 @@ const Auth: FunctionComponent<Props> = ({ mode, title, classes }) => {
     );
 };
 
-export default withStyles(styles)(Auth);
+export default Auth;

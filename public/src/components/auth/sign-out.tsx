@@ -13,6 +13,7 @@ const SignOut = () => {
 
     return (
         <Button
+            style={{ marginRight: '10px' }}
             variant="contained"
             color="primary"
             onClick={onClick}

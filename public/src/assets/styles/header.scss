@@ -5,7 +5,16 @@
     padding: 5px 0;
     min-height: 46px;
 
+    .auth-buttons-wrapper {
+        text-align: right;
+    }
+
     button {
         color: $white;
+    }
+
+    .username {
+        color: $white;
+        margin-right: 20px;
     }
 }

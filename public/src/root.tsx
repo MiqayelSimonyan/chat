@@ -1,38 +1,56 @@
-import React, { FunctionComponent } from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Route, Switch } from 'react-router';
 import Grid from '@material-ui/core/Grid';
-import { withStyles } from '@material-ui/core/styles';
-
 import Header from 'components/shared/header';
 import HomePage from 'components/home';
 import Chat from 'components/chat';
+import Users from 'components/users';
 import PageNotFound from 'components/page-not-found';
+import { makeStyles } from '@material-ui/core';
 
-import { IIndexSignature } from 'types/global/index-signature';
+import { isAuth as isAuthAction } from 'ducks/auth';
+import { isAuthSelector } from 'selectors/auth';
 
-const styles = () => ({
+import PrivateRoute from 'components/common/private-route';
+import { IStoreIsAuth } from 'types/store/auth';
+import { getUsers, getUser } from 'ducks/user';
+
+const useStyles = makeStyles({
     grid: {
         margin: '0 auto'
     },
 });
 
-type Props = {
-    classes: IIndexSignature<any>;
-};
+const Root = () => {
+    let isAuth: IStoreIsAuth = useSelector(isAuthSelector);
+    const dispatch = useDispatch();
+    const classes = useStyles();
 
-const Root: FunctionComponent<Props> = ({ classes }) => {
+    useEffect(() => {
+        dispatch(isAuthAction());
+        dispatch(getUser());
+    }, []);
+
+    useEffect(() => {
+        if (isAuth.hasOwnProperty('auth') && isAuth.auth) {
+            dispatch(getUsers());
+        };
+    }, [isAuth]);
+
     return (
         <>
             <Header />
-            <Grid item xs={6} className={classes.grid}>
+            <Grid item xs={8} className={classes.grid}>
                 <Switch>
-                    <Route path="/" exact={true} component={HomePage} />
-                    <Route path="/chat" exact={true} component={Chat} />
-                    <Route path="*" exact={true} component={PageNotFound} />
+                    <Route path="/" exact component={HomePage} />
+                    <PrivateRoute path='/users' component={Users} exact />
+                    <PrivateRoute path={['/chat', '/chat/:id']} component={Chat} exact />
+                    <Route path="*" component={PageNotFound} />
                 </Switch>
             </Grid>
         </>
     );
 };
 
-export default withStyles(styles)(Root);
+export default Root;

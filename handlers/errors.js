@@ -13,7 +13,7 @@ exports.init = app => app.use(async (ctx, next) => {
 				errors[field] = e.errors[field].message;
 			};
 
-			ctx.body = { errors };
+			ctx.body = errors;
 		} else {
 			ctx.body = { message: e.message };
 			ctx.status = 500;

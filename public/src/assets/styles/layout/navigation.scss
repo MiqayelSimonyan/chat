@@ -1,0 +1,12 @@
+@import '../variables/colors.scss';
+
+a {
+    color: $white;
+    text-decoration: none;
+    margin: 0 5px;
+    line-height: 12px;
+
+    &:hover, &.active {
+        color: $grey1;
+    }
+}

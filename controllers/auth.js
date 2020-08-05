@@ -29,20 +29,23 @@ const signIn = async (ctx, next) => {
 
             ctx.body = user.toObject();
         } else {
-            ctx.status = 401;
-            ctx.body = info;
+            ctx.throw(401, info);
         };
     })(ctx, next);
 };
 
 const signOut = async (ctx, next) => {
     try {
+        let user = ctx.state.user;
         await ctx.logOut();
 
         ctx.session = null
         ctx.sessionOptions.maxAge = 0
 
-        ctx.body = true;
+        ctx.body = {
+            _id: user._id,
+            success: true
+        };
     } catch (err) {
         ctx.body = false;
     };

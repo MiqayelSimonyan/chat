@@ -12,7 +12,6 @@ const App = () => {
     <Grid
       container
       spacing={0}
-      direction="column"
     >
       <Provider store={store}>
         <Router history={history}>

@@ -1,0 +1,7 @@
+@import '../variables/colors.scss';
+
+.chat_wrapper {
+    .active {
+        background-color: $light-blue2!important;
+    }
+}
