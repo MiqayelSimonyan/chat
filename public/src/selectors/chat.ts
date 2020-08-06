@@ -4,7 +4,7 @@ import { moduleName } from 'ducks/chat';
 
 const stateSelector = (key: string) => (state: any) => state[moduleName].get(key);
 
-export const reciverSelector = createSelector(stateSelector('reciver'), (value) => {
+export const receiverSelector = createSelector(stateSelector('receiver'), (value) => {
     return value && value.toJS ? value.toJS() : value
 });
 

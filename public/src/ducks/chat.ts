@@ -8,17 +8,19 @@ import socket from 'services/socket';
 
 import { SetMapTypeAllowedData } from 'types/global/reducer-state';
 import { IUser } from 'types/store/user';
-import { IGetReciverAction, ChatActionTypes, IChatState, IMessage } from 'types/store/chat';
+import { IGetReceiverAction, ChatActionTypes, IChatState, IMessage, IGetMessageAction } from 'types/store/chat';
 
 import {
     GET_CHAT_USER_REQUEST,
     GET_CHAT_USER_SUCCESS,
+    GET_MESSAGES_REQUEST,
+    GET_MESSAGES_SUCCESS,
     ADD_MESSAGE_SUCCESS
 } from '../types/store/chat';
 
 const initialState: IChatState = {
     loading: false,
-    reciver: Map(),
+    receiver: Map(),
     messages: List.of()
 };
 
@@ -41,7 +43,11 @@ export default function reducer(
         case GET_CHAT_USER_SUCCESS:
             return state
                 .set('loading', false)
-                .set('reciver', fromJS(action.payload))
+                .set('receiver', fromJS(action.payload))
+
+        case GET_MESSAGES_SUCCESS:
+            return state
+                .set('messages', fromJS(action.payload));
 
         case ADD_MESSAGE_SUCCESS:
             return state
@@ -54,11 +60,18 @@ export default function reducer(
 };
 
 /* actions */
-export function getReciver(payload: string): ChatActionTypes {
+export function getReceiver(payload: string): ChatActionTypes {
     return {
         type: GET_CHAT_USER_REQUEST,
         payload
     };
+};
+
+export function getMessages(payload: string): ChatActionTypes {
+    return {
+        type: GET_MESSAGES_REQUEST,
+        payload
+    }
 };
 
 export function addMessage(payload: IMessage): ChatActionTypes {
@@ -78,6 +91,19 @@ export function* createEventChannel(socket: any) {
     });
 };
 
+export const getMessagesSaga = function* (action: IGetMessageAction) {
+    try {
+        const data: AxiosResponse<Array<IMessage>> = yield call(api, `messages/${action.payload}`);
+
+        yield put({
+            type: GET_MESSAGES_SUCCESS,
+            payload: data?.data
+        });
+    } catch (err) {
+        console.log('err', err);
+    }
+};
+
 export const addMessageSaga = function* () {
     const channel = yield call(createEventChannel, socket);
 
@@ -92,7 +118,7 @@ export const addMessageSaga = function* () {
     };
 };
 
-export const getReciverSaga = function* (action: IGetReciverAction) {
+export const getReceiverSaga = function* (action: IGetReceiverAction) {
     try {
         const data: AxiosResponse<Array<IUser>> = yield call(api, `user/${action.payload}`);
 
@@ -107,7 +133,8 @@ export const getReciverSaga = function* (action: IGetReciverAction) {
 
 export const saga = function* () {
     yield all([
-        takeEvery(GET_CHAT_USER_REQUEST, getReciverSaga),
+        takeEvery(GET_MESSAGES_REQUEST, getMessagesSaga),
+        takeEvery(GET_CHAT_USER_REQUEST, getReceiverSaga),
         fork(addMessageSaga)
     ]);
 };

@@ -20,16 +20,19 @@ export default makeStyles({
         overflowY: 'auto'
     },
     textAlignRight: {
-        textAlign: 'right'
+        textAlign: 'right',
+        '& > p': {
+            color: 'green'
+        }
     },
     senderMessage: {
         backgroundColor: '#8fa548',
         padding: '10px',
         color: '#fff',
     },
-    reciverMessage: {
+    receiverMessage: {
         '& > div': {
-            backgroundColor: '#ebebeb',
+            backgroundColor: '#dadada',
         },
         padding: '10px'
     },
@@ -40,5 +43,14 @@ export default makeStyles({
     orderToRight: {
         order: 2,
         marginLeft: 'auto'
+    },
+    orderToLeft: {
+        paddingLeft: '12px'
+    },
+    date: {
+        margin: 0,
+        '& > p': {
+            fontSize: '11px'
+        }
     }
 });

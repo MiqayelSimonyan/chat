@@ -112,7 +112,7 @@ export const loginRegisterSaga = function* (action: Required<IAddUserAction>) {
         socket.emit('authentificate', data?.data?._id);
 
         yield put({ type: GET_USER_SUCCESS, payload: data?.data });
-        history.push('/users');
+        history.push('/chat');
     } catch (error) {
         yield put(setAuthError(error.response?.data));
     }

@@ -29,6 +29,7 @@ const router = new Router();
 
 require('./routes/auth').init(router);
 require('./routes/user').init(router);
+require('./routes/chat/message').init(router);
 
 app.use(router.routes());
 

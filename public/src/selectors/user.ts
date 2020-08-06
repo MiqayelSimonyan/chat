@@ -11,3 +11,7 @@ export const userSelector = createSelector(stateSelector('user'), (value) => {
 export const usersSelector = createSelector(stateSelector('users'), (value) => {
     return value && value.toJS ? value.toJS() : value
 });
+
+export const usersLoadingSelector = createSelector(stateSelector('usersLoading'), (value) => {
+    return value && value.toJS ? value.toJS() : value
+});

@@ -5,7 +5,6 @@ import Grid from '@material-ui/core/Grid';
 import Header from 'components/shared/header';
 import HomePage from 'components/home';
 import Chat from 'components/chat';
-import Users from 'components/users';
 import PageNotFound from 'components/page-not-found';
 import { makeStyles } from '@material-ui/core';
 
@@ -44,7 +43,6 @@ const Root = () => {
             <Grid item xs={8} className={classes.grid}>
                 <Switch>
                     <Route path="/" exact component={HomePage} />
-                    <PrivateRoute path='/users' component={Users} exact />
                     <PrivateRoute path={['/chat', '/chat/:id']} component={Chat} exact />
                     <Route path="*" component={PageNotFound} />
                 </Switch>

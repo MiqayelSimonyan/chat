@@ -1,4 +1,5 @@
-import React, { useState, memo, ChangeEvent, KeyboardEvent } from 'react';
+import React, { useState, memo, ChangeEvent, KeyboardEvent, FunctionComponent } from 'react';
+import { withRouter } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Grid, TextField, Fab } from '@material-ui/core';
 import SendIcon from '@material-ui/icons/Send';
@@ -6,12 +7,15 @@ import SendIcon from '@material-ui/icons/Send';
 import socket from 'services/socket';
 import { addMessage as addMessageAction } from 'ducks/chat';
 import { userSelector } from 'selectors/user';
-import { reciverSelector } from 'selectors/chat';
 import { IUser } from 'types/store/user';
+import { RoutePropsType } from 'types/global/route-props';
+import { IMatchParams } from 'types/common';
 
-const ChatAction = () => {
+type Props = RoutePropsType<IMatchParams, {}>;
+
+const ChatAction: FunctionComponent<Props> = ({ match }) => {
+    let paramsId = match?.params?.id;
     let user: IUser = useSelector(userSelector);
-    let reciver: IUser = useSelector(reciverSelector);
     const [message, setMessage] = useState('');
 
     const dispatch = useDispatch();
@@ -21,12 +25,12 @@ const ChatAction = () => {
     };
 
     const onBlur = () => {
-        socket.emit('stop_typing', reciver);
+        socket.emit('stop_typing', { _id: paramsId });
     };
 
     const onKeyPress = (event: KeyboardEvent) => {
         let value = (event.target as HTMLInputElement).value;
-        socket.emit('typing', user, reciver);
+        socket.emit('typing', user, { _id: paramsId });
 
         if (value) {
             setMessage(value);
@@ -35,12 +39,16 @@ const ChatAction = () => {
         };
     };
 
-    const addMessage = (text: string) => {
-        let data = { reciver, user, text, date: Date.now() };
-        socket.emit('message', data);
+    const addMessage = (message: string) => {
+        let data = {
+            receiver: { _id: paramsId },
+            sender: user,
+            message, date: Date.now()
+        };
 
-        socket.emit('stop_typing', reciver);
-        dispatch(addMessageAction({ sender: true, ...data }));
+        socket.emit('message', data);
+        socket.emit('stop_typing', { _id: paramsId });
+        dispatch(addMessageAction({ ...data }));
 
         setMessage('');
     };
@@ -71,4 +79,4 @@ const ChatAction = () => {
     );
 };
 
-export default memo(ChatAction);
+export default memo(withRouter(ChatAction));

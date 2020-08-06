@@ -15,6 +15,7 @@ import {
 
 const initialState: IUserState = {
     loading: false,
+    usersLoading: true,
     users: List.of(),
     user: Map()
 };
@@ -39,13 +40,9 @@ export default function reducer(
                 .set('loading', false)
                 .set('user', fromJS(action.payload))
 
-        case GET_USERS_REQUEST:
-            return state
-                .set('loading', true)
-
         case GET_USERS_SUCCESS:
             return state
-                .set('loading', false)
+                .set('usersLoading', false)
                 .set('users', fromJS(action.payload) || state.get('users'))
 
         default:

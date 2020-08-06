@@ -1,49 +1,52 @@
 import React, { memo, useEffect, FunctionComponent, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Grid, Typography, ListItemText, Divider, Paper } from '@material-ui/core';
 
-import { getReciver } from 'ducks/chat';
 import { isAuthSelector } from 'selectors/auth';
-import { userSelector } from 'selectors/user';
+import { userSelector, usersSelector, usersLoadingSelector } from 'selectors/user';
 
 import socket from 'services/socket';
 
-import Recivers from './recivers';
+import Users from './users';
 import Messages from './messages';
 import ChatAction from './chat-action';
+
+import Loading from 'components/common/loading';
 
 import { RoutePropsType } from 'types/global/route-props';
 import { IUser } from 'types/store/user';
 import { IStoreIsAuth } from 'types/store/auth';
 import { IMatchParams } from 'types/common';
+import { Typing } from 'types/chat';
+import { IIndexSignature } from 'types/global/index-signature';
 
 import styles from './styles';
 
 import 'assets/styles/pages/chat.scss';
-import { Typing } from 'types/chat';
 
 const useStyles = styles;
 
 type Props = RoutePropsType<IMatchParams, {}>;
 
-const Chat: FunctionComponent<Props> = (props) => {
-    const [paramsId, setParamsId] = useState<string>('');
-    const [typingUser, setTypingUser] = useState<any>(null);
+const Chat: FunctionComponent<Props> = ({ match }) => {
+    const [typingUser, setTypingUser] = useState<IUser | null>(null);
+    const [onlineUsers, setOnlineUsers] = useState({});
 
+    let usersLoading: Array<IUser> = useSelector(usersLoadingSelector);
+    let users: Array<IUser> = useSelector(usersSelector);
     let user: IUser = useSelector(userSelector);
     let isAuth: IStoreIsAuth = useSelector(isAuthSelector);
 
-    const dispatch = useDispatch();
     const classes = useStyles();
+
+    socket.on('online', (data: { clients: IIndexSignature<string> }) => {
+        setOnlineUsers(data?.clients);
+    });
 
     useEffect(() => {
         if (isAuth.hasOwnProperty('auth') && isAuth.auth) {
-            let id = props?.match?.params?.id;
-            setParamsId(id);
-            dispatch(getReciver(id));
-
             socket.on('user_typing', (data: Typing) => {
-                setTypingUser(data?.user);
+                if (data?.user) setTypingUser(data.user);
             });
 
             socket.on('user_stop_typing', () => {
@@ -59,26 +62,35 @@ const Chat: FunctionComponent<Props> = (props) => {
     return (
         !isAuth ? null :
             <div className="chat_wrapper">
-                <Grid container>
-                    <Grid item xs={12} className={classes.title}>
-                        <Typography variant="h5" className="header-message">Chat</Typography>
-                    </Grid>
-                </Grid>
-                <Divider />
-                <Grid container component={Paper} className={classes.chatSection}>
-                    <Recivers classes={classes} />
-                    <Grid item xs={6} md={8}>
-                        <Messages classes={classes} paramsId={paramsId} />
-                        <Divider />
-                        {(!typingUser?.username || typingUser._id !== paramsId) ? null :
-                            <Grid item>
-                                <ListItemText style={{ paddingLeft: '20px' }} primary={`${typingUser.username} is typing...`}></ListItemText>
+                {usersLoading ? <Loading /> : !users.length ? <h2 style={{ textAlign: 'center' }}>No users for chat</h2> :
+                    <>
+                        <Grid container>
+                            <Grid item xs={12} className={classes.title}>
+                                <Typography variant="h5" className="header-message">Chat</Typography>
                             </Grid>
-                        }
+                        </Grid>
                         <Divider />
-                        <ChatAction />
-                    </Grid>
-                </Grid>
+                        <Grid container component={Paper} className={classes.chatSection}>
+                            <Users classes={classes} users={users} onlineUsers={onlineUsers} />
+                            <Grid item xs={6} md={8}>
+                                {!match?.params?.id ? <h2 className="info">click on username and start a chat with a particular user</h2> :
+                                    <>
+                                        <Messages user={user} classes={classes} />
+                                        <Divider />
+                                        {
+                                            (!typingUser?.username || typingUser._id !== match?.params?.id) ? null :
+                                                <Grid item>
+                                                    <ListItemText style={{ paddingLeft: '20px' }} primary={`${typingUser.username} is typing...`}></ListItemText>
+                                                </Grid>
+                                        }
+                                        <Divider />
+                                        <ChatAction />
+                                    </>
+                                }
+                            </Grid>
+                        </Grid>
+                    </>
+                }
             </div>
     )
 };

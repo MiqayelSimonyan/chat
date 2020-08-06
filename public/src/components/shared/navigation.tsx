@@ -25,14 +25,13 @@ const Navigation = () => {
                 {
                     users?.length ?
                         <Button>
-                            <NavLink to="/users" exact>users</NavLink>
+                            <NavLink to="/chat" exact>chat</NavLink>
                         </Button>
                         : null
                 }
             </Grid>
             <Grid item xs={3} style={{ textAlign: 'right' }}>
                 <span className="username">{user?.username}</span>
-
                 <SignOut />
             </Grid>
         </Grid>

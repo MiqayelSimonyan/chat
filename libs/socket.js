@@ -1,13 +1,14 @@
 const Cookies = require('cookies');
 const config = require('config');
 const User = require('../models/User');
+const Message = require('../models/Message');
 
 const socketIO = require('socket.io');
 const socketRedis = require('socket.io-redis');
 const sessionStore = require('./sessionStore');
 const logger = require('./logger');
 
-global.users = [];
+global.clients = {};
 
 function socket(server) {
   const io = socketIO(server);
@@ -16,37 +17,51 @@ function socket(server) {
 
   io.on('connection', async function (socket) {
     logger.info('socket connected', { requestId: socket.id });
-    // socket.broadcast.emit('system_message', `${socket.user.username} connected.`);
 
     socket.on('authentificate', async (id) => {
-      users[id] = socket.id;
+      clients[id] = socket.id;
+
+      io.sockets.emit('online', {
+        clients
+      });
     });
 
     socket.on('signout', async (_id) => {
-      delete users[_id];
+      delete clients[_id];
     });
 
     socket.on('disconnect', () => {
-      //  socket.broadcast.emit('system_message', `${socket.user.username} disconnected.`);
+      let discoonnectedClientId = Object.keys(clients).find(key => clients[key] === socket.id);
+      if (discoonnectedClientId) delete clients[discoonnectedClientId];
+
+      io.sockets.emit('online', {
+        clients
+      });
     });
 
-    socket.on('message', (data) => {
-      socket.broadcast.to(users[data.reciver._id]).emit('user_message', {
-        sender: false,
-        reciver: data.user,
-        text: data.text,
+    socket.on('message', async (data) => {
+      let receiverId = data.receiver._id;
+      let sender = data.sender._id;
+      let message = data.message;
+
+      await Message.create({ sender, receiver: receiverId, message });
+
+      socket.broadcast.to(clients[receiverId]).emit('user_message', {
+        sender: data.sender,
+        receiver: data.receiver,
+        message,
         date: Date.now()
       });
     });
 
-    socket.on('typing', (user, reciver) => {
-      socket.broadcast.to(users[reciver._id]).emit('user_typing', {
+    socket.on('typing', (user, receiver) => {
+      socket.broadcast.to(clients[receiver._id]).emit('user_typing', {
         user
       });
     });
 
     socket.on('stop_typing', user => {
-      socket.broadcast.to(users[user._id]).emit('user_stop_typing', {
+      socket.broadcast.to(clients[user._id]).emit('user_stop_typing', {
         username: user.username
       });
     });

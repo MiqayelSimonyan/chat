@@ -11,6 +11,7 @@ export const GET_USERS_SUCCESS = 'GET_USERS_SUCCESS';
 
 export interface IUserState {
     loading: boolean;
+    usersLoading: boolean;
     user: ImmutableMap<IUser>;
     users: List<IUser>;
 };
