@@ -8,7 +8,7 @@
 
 *  ### Front End
 
-##### go to public folder
+##### go to client folder
 
 ### `npm install`
 

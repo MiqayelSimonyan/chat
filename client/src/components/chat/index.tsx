@@ -39,9 +39,16 @@ const Chat: FunctionComponent<Props> = ({ match }) => {
 
     const classes = useStyles();
 
-    socket.on('online', (data: { clients: IIndexSignature<string> }) => {
-        setOnlineUsers(data?.clients);
-    });
+    useEffect(() => {
+        let ignore = false;
+        socket.on('online', (data: { clients: IIndexSignature<string> }) => {
+            if (!ignore) setOnlineUsers(data?.clients);
+        });
+
+        return () => {
+            ignore = true;
+        };
+    }, []);
 
     useEffect(() => {
         if (isAuth.hasOwnProperty('auth') && isAuth.auth) {
