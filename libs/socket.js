@@ -28,6 +28,10 @@ function socket(server) {
 
     socket.on('signout', async (_id) => {
       delete clients[_id];
+
+      io.sockets.emit('online', {
+        clients
+      });
     });
 
     socket.on('disconnect', () => {

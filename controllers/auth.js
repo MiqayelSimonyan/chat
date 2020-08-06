@@ -62,7 +62,6 @@ const isAuth = async (ctx, next) => {
             isAuth: false,
             user: null
         };
-        //    throw new Error('user is not authentificated');
     }
 };
 
