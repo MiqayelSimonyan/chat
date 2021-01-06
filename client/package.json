@@ -18,7 +18,7 @@
     "@types/react-router-redux": "^5.0.18",
     "@types/redux-logger": "^3.0.8",
     "@types/socket.io-client": "^1.4.33",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "formik": "^2.1.5",
     "immutable": "^4.0.0-rc.12",
     "moment": "^2.27.0",
